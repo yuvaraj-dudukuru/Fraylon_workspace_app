@@ -47,6 +47,7 @@ export default function HomeScreen() {
   const [isOnline, setIsOnline] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasWebError, setHasWebError] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
@@ -71,17 +72,34 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true);
+    setHasWebError(false);
     webViewRef.current?.reload();
   }, []);
 
   const onRetry = useCallback(() => {
     setIsLoading(true);
+    setHasWebError(false);
     webViewRef.current?.reload();
   }, []);
 
   const webViewSection = useMemo(() => {
     if (!isOnline) {
       return <OfflineNotice onRetry={onRetry} />;
+    }
+
+    if (hasWebError) {
+      return (
+        <View style={styles.errorWrap}>
+          <Text style={styles.errorTitle}>Web app unavailable</Text>
+          <Text style={styles.errorText}>
+            The configured URL is not reachable right now. Update `EXPO_PUBLIC_WEB_URL` to a live endpoint.
+          </Text>
+          <Text style={styles.errorUrl}>{WEB_URL}</Text>
+          <Pressable style={styles.modalButton} onPress={onRetry}>
+            <Text style={styles.modalButtonText}>Retry</Text>
+          </Pressable>
+        </View>
+      );
     }
 
     return (
@@ -97,11 +115,17 @@ export default function HomeScreen() {
           setSupportMultipleWindows={false}
           overScrollMode="never"
           injectedJavaScript={injectedJavaScript}
+          onHttpError={() => {
+            setHasWebError(true);
+            setIsLoading(false);
+            setIsRefreshing(false);
+          }}
           onLoadEnd={() => {
             setIsLoading(false);
             setIsRefreshing(false);
           }}
           onError={() => {
+            setHasWebError(true);
             setIsLoading(false);
             setIsRefreshing(false);
           }}
@@ -110,7 +134,7 @@ export default function HomeScreen() {
         />
       </View>
     );
-  }, [isOnline, onRetry]);
+  }, [hasWebError, isOnline, onRetry]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -155,6 +179,30 @@ const styles = StyleSheet.create({
   webContainer: {
     flex: 1,
     minHeight: 500,
+  },
+  errorWrap: {
+    flex: 1,
+    minHeight: 500,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  errorTitle: {
+    color: colors.white,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  errorText: {
+    color: colors.gray,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  errorUrl: {
+    color: colors.white,
+    fontSize: 12,
+    opacity: 0.85,
+    textAlign: "center",
   },
   modalBackdrop: {
     flex: 1,
