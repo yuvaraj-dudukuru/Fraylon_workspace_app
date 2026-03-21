@@ -47,9 +47,11 @@
       "typedRoutes": true
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "replace-with-eas-project-id"
+        "projectId": "e89c1d38-1795-49be-b7bd-3728950cd0ff"
       }
-    }
+    },
+    "owner": "yuvaraj2005"
   }
 }
